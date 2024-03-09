@@ -1,0 +1,45 @@
+- hosts: all
+  become: yes
+  become_method: sudo
+  become_user: root
+
+  tasks:
+    - name: install packages on remote machine - ubuntu
+      apt:
+       name: "{{item}}"
+       state: latest
+       update_cache: yes
+      when: ansible_distribution=="ubuntu"
+      loop:
+        - git
+        - apache2
+
+
+    - name: install apache on remote machine - Redhat
+      yum:
+         name: "{{item}}"
+         state: latest
+         update_cache: yes
+      when: ansible_distribution=="RedHat"
+      loop:
+        - git
+        - httpd
+
+    - name: enable the service - ubuntu
+      service:
+         enabled: true
+         name: apache2
+         state: started
+      when: ansible_distribution=="ubuntu"
+
+    - name: enable the service - RedHat
+      service:
+         enabled: true
+         name: httpd
+         state: started
+      when: ansible_distribution=="RedHat"
+
+    - name: copy the index.html to remote webserver
+      copy:
+        src: /etc/ansible/files/index.html
+        dest: /var/www/html/index.html
