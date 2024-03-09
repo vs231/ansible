@@ -1,0 +1,49 @@
+- hosts: all
+   become: yes
+   become_method: sudo
+   become_user: root
+
+   vars:
+    package_name: apache2
+    service_name: apache2
+    destination_path: /var/www/html
+    index_file: index.html
+
+   tasks:
+     - name: install apache on ubuntu
+       apt:
+        name: "{{package_name}}"
+        state: latest
+        update_cache: yes
+       when: ansible_distribution=="Ubuntu"
+
+     - name: install apache on redhat
+       yum:
+        name: httpd
+        state: latest
+        update_cache: yes
+       when: ansible_distribution=="RedHat"
+
+     - name: enable the service
+       service:
+          enabled: true
+          name: "{{service_name}}"
+          state: started
+       when: ansible_distribution=="Ubuntu"
+     - name: enable the service
+       service:
+          enabled: true
+          name: httpd
+          state: started
+       when: ansible_distribution=="RedHat"
+
+     - name: copy the index.html to remote server
+       copy:
+        src: "/etc/ansible/files/{{index_file}}"
+        dest: "{{destination_path}}/{{index_file}}"
+        notify: restart apache
+   handlers:
+       - name: restart apache
+         service:
+            name: "{{service_name}}"
+            state: restarted
